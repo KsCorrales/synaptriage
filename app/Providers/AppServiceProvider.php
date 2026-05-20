@@ -22,8 +22,8 @@ class AppServiceProvider extends ServiceProvider
             jwtTtl:  config('services.synapcores.jwt_ttl'),
         ));
     
-        $this->app->singleton(SynapCoresService::class, fn (app) => new SynapCoresService(
-            app->make(SynapCoresClient::class)
+        $this->app->singleton(SynapCoresService::class, fn ($app) => new SynapCoresService(
+            $app->make(SynapCoresClient::class)
         ));
     }
 
