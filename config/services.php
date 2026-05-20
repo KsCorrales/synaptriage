@@ -14,6 +14,13 @@ return [
     |
     */
 
+    'synapcores' => [
+        'base_url' => env('SYNAPCORES_BASE_URL'),
+        'api_key'  => env('SYNAPCORES_API_KEY'),
+        'timeout'  => env('SYNAPCORES_TIMEOUT', 30),
+        'jwt_ttl'  => env('SYNAPCORES_JWT_TTL', 3600),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
