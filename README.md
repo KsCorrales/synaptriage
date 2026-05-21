@@ -81,8 +81,11 @@ app/
 │   └── SupportTicket.php
 └── Services/
     └── SynapCores/
-        ├── SynapCoresClient.php    # Transport layer (JWT, retries, timeouts)
-        ├── SynapCoresService.php   # Business logic layer
+        ├── SynapCoresClient.php       # Transport layer (JWT, retries, timeouts)
+        ├── SynapCoresService.php      # Business logic layer
+        ├── FakeSynapCoresClient.php   # Test double for local and CI environments
+        ├── Contracts/
+        │   └── SynapCoresClientInterface.php
         ├── DTOs/
         │   ├── PredictionResult.php
         │   └── ExperimentConfig.php
@@ -99,9 +102,9 @@ app/
 - PHP 8.2+
 - Composer
 - Node.js 20+
-- A SynapCores AIDB account with API key
+- A running SynapCores AIDB instance (see [docs.synapcores.com](https://docs.synapcores.com))
 
-### Installation
+### Step 1 — Clone and install dependencies
 
 ```bash
 git clone https://github.com/your-username/synaptriage.git
@@ -109,35 +112,62 @@ cd synaptriage
 
 composer install
 npm install && npm run build
+```
 
+### Step 2 — Environment
+
+```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-### Environment
-
 Edit `.env` and set your SynapCores credentials:
 
 ```env
-SYNAPCORES_BASE_URL=https://api.synapcores.com
-SYNAPCORES_API_KEY=your-api-key-here
+SYNAPCORES_BASE_URL=http://localhost:8080
+SYNAPCORES_USERNAME=admin
+SYNAPCORES_PASSWORD=your-password-here
 SYNAPCORES_TIMEOUT=30
 SYNAPCORES_JWT_TTL=3600
 ```
 
-### Database
+### Step 3 — Database and queue tables
 
 ```bash
 php artisan migrate
 ```
 
-### Queue Worker
+### Step 4 — Seed the dataset
+
+```bash
+php artisan db:seed --class=SupportTicketSeeder
+```
+
+This generates 7,000 support tickets with intentional ML signal in the local SQLite database.
+
+### Step 5 — Train the model
+
+```bash
+php artisan synap:seed-experiment
+```
+
+Save the `model_id` output to `.env` as `SYNAPCORES_MODEL_ID`.
+
+### Step 6 — Start the queue worker
+
+Open a second terminal and keep this running:
 
 ```bash
 php artisan queue:work
 ```
 
-Open a separate terminal and keep this running while using the app.
+### Step 7 — Start the app
+
+```bash
+php artisan serve
+```
+
+Visit `http://localhost:8000/tickets`.
 
 ---
 
@@ -157,7 +187,7 @@ Steps executed:
 1. Seeds 5,000–10,000 realistic support tickets with intentional signal into the local DB
 2. Sends the dataset to SynapCores via `CREATE EXPERIMENT`
 3. Executes `TRAIN` on the experiment
-4. Outputs the `experiment_id` — save this, it is stored in `.env` and used by all subsequent commands
+4. Outputs the `model_id` — save this to `.env` as `SYNAPCORES_MODEL_ID`
 
 ### Run AutoML predictions on the full dataset
 
@@ -178,7 +208,7 @@ This command:
 php artisan serve
 ```
 
-Visit `http://localhost:8000`. You will see a table of support tickets with:
+Visit `http://localhost:8000/tickets`. You will see a table of support tickets with:
 
 | Column | Description |
 |---|---|
@@ -189,6 +219,76 @@ Visit `http://localhost:8000`. You will see a table of support tickets with:
 | Status | Pending prediction / Complete |
 
 Creating a new ticket dispatches `ProcessTicketTriage` to the queue. Once the worker processes it, the prediction appears automatically.
+
+---
+
+## Testing
+
+The SDK layer is covered by unit tests using `FakeSynapCoresClient` — a test double that implements `SynapCoresClientInterface` and returns deterministic responses without requiring a live SynapCores instance.
+
+The fake client applies the same signal logic as the seeder: `outage` + `enterprise` + short response time returns `critical`, `general` + `free` + long response time returns `low`. This means the tests validate not just that the service returns a result, but that the prediction logic is coherent.
+
+```bash
+php artisan test --filter=SynapCoresServiceTest
+```
+
+Expected output:
+
+```
+PASS  Tests\Unit\SynapCoresServiceTest
+✓ create experiment returns job id
+✓ wait for training returns model id
+✓ predict returns prediction result
+✓ predict low priority ticket
+✓ predict returns confidence between zero and one
+✓ run automl predict returns array of prediction results
+
+Tests: 6 passed (17 assertions)
+```
+
+To run the full test suite:
+
+```bash
+php artisan test
+```
+
+---
+
+## Local Testing
+
+A SynapCores instance is required to run the full prediction pipeline. The following steps can be verified locally without one.
+
+### What can be tested locally
+
+**Migrations and seeder**
+```bash
+php artisan migrate:fresh
+php artisan db:seed --class=SupportTicketSeeder
+```
+Verify 7,000 tickets are created in the database with realistic data and intentional signal.
+
+**Unit tests**
+```bash
+php artisan test --filter=SynapCoresServiceTest
+```
+All 6 tests pass without a live SynapCores instance thanks to `FakeSynapCoresClient`.
+
+**UI and form**
+```bash
+# Terminal 1
+php artisan serve
+
+# Terminal 2
+php artisan queue:work
+```
+
+Visit `http://localhost:8000/tickets`. The ticket table displays all seeded records with `triage_status: pending`. Creating a ticket via the form dispatches `ProcessTicketTriage` to the queue.
+
+### What requires a SynapCores instance
+
+- `php artisan synap:seed-experiment` — requires a running SynapCores instance to create and train the experiment
+- `php artisan synap:run-automl` — requires a valid `SYNAPCORES_MODEL_ID` in `.env`
+- Predictions appearing in the UI — require a trained model
 
 ---
 
@@ -220,9 +320,8 @@ This section is intentional. A senior engineer ships pragmatically and documents
 - **No pagination on the ticket table** — The UI loads all tickets. With 10,000 rows this would need server-side pagination via Inertia's built-in support.
 - **No feature importance or model explainability** — We show confidence scores but not which features drove the prediction. A production system would expose this from SynapCores' API response.
 - **Single queue, no priority lanes** — All jobs go to the `default` queue. A production system would have separate `critical` and `default` queues with different worker concurrency.
-- **No test coverage on the SDK** — The `SynapCoresClient` would benefit from a full suite of unit tests mocking HTTP responses, especially for the JWT re-auth path.
 - **No frontend architecture** — Tailwind utility classes are applied inline directly in the component for speed. With more time, this would be extracted into a proper design system, reusable component library, and consistent styling conventions. The frontend was intentionally kept minimal as it is not the focus of this assessment.
-- **SynapCores CE could not be validated end-to-end locally** — The original intent was to install SynapCores Community Edition locally to run the full prediction pipeline against a real instance. The CE binary was successfully installed on Ubuntu via WSL2, however it requires FFmpeg 4.x and Ubuntu 24.04 ships FFmpeg 7.x — an ABI-incompatible conflict that cannot be resolved via symlinks. As a result, a FakeSynapCoresClient was introduced to simulate API responses and validate the full request lifecycle — auth, experiment creation, training, and prediction — without a live instance. Full end-to-end validation would require either a Linux environment with FFmpeg 4.x or a hosted SynapCores instance.
+- **SynapCores CE could not be validated end-to-end locally** — The original intent was to install SynapCores Community Edition locally to run the full prediction pipeline against a real instance. The CE binary was successfully installed on Ubuntu via WSL2, however it requires FFmpeg 4.x and Ubuntu 24.04 ships FFmpeg 7.x — an ABI-incompatible conflict that cannot be resolved via symlinks. As a result, a `FakeSynapCoresClient` was introduced to simulate API responses and validate the full request lifecycle — auth, experiment creation, training, and prediction — without a live instance. Full end-to-end validation would require either a Linux environment with FFmpeg 4.x or a hosted SynapCores instance.
 
 ### What I would do with more time
 
