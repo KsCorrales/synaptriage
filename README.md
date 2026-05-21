@@ -58,10 +58,11 @@ SynapTriage automatically classifies and prioritizes incoming support tickets us
 ### Key Design Decisions
 
 - **Thin controllers:** `TicketController` only handles HTTP — validation, dispatch, and response. All ML logic lives in `SynapCoresService`.
-- **SDK separation of concerns:** `SynapCoresClient` handles transport (auth, retries, timeouts). `SynapCoresService` handles business logic (experiment lifecycle, prediction mapping).
-- **JWT caching:** The token is cached in Laravel Cache with a TTL slightly shorter than the actual expiry. On a 401, the client invalidates the cache and re-authenticates transparently — the caller never needs to handle this.
+- **SDK separation of concerns:** `SynapCoresClient` owns the transport layer (auth, retries, timeouts) and knows nothing about tickets or experiments. `SynapCoresService` owns the business logic (experiment lifecycle, prediction mapping) and knows nothing about HTTP. Each class has exactly one reason to change.
+- **JWT auth caching:** The token is stored in Laravel Cache with a TTL 60 seconds shorter than the actual expiry to avoid edge-case expirations mid-request. If a 401 is received despite a cached token, the cache is invalidated and a single re-authentication attempt is made transparently — the caller never needs to handle token lifecycle.
+- **Typed error handling:** All failure modes (authentication failure, timeout, non-2xx responses) are caught and re-thrown as a `SynapCoresException` with a specific status code and context. This means the rest of the application has a single, predictable exception type to handle — no leaking of HTTP client internals.
 - **Async by default:** Predictions run in a queued Job so the HTTP response is never blocked by a third-party API call.
-- **DTOs over arrays:** `PredictionResult` and `ExperimentConfig` are typed value objects — no magic array keys passed between layers.
+- **DTOs over arrays:** `PredictionResult` and `ExperimentConfig` are typed value objects — no magic array keys passed between layers, and the compiler catches contract mismatches early.
 
 ---
 
