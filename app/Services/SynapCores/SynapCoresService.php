@@ -13,29 +13,56 @@ class SynapCoresService
 
     public function createExperiment(ExperimentConfig $config): string
     {
-        $response = $this->client->post('experiments', $config->toArray());
-
-        return $response['experiment_id'];
-    }
-
-    public function train(string $experimentId): void
-    {
-        $this->client->post("experiments/{$experimentId}/train");
-    }
-
-    public function predict(string $experimentId, array $features): PredictionResult
-    {
-        $response = $this->client->post("experiments/{$experimentId}/predict", [
-            'features' => $features,
+        $response = $this->client->post('v1/automl/train', [
+            'dataset_id'    => $config->name,
+            'task'          => $config->modelType,
+            'target_column' => $config->targetColumn,
+            'algorithms'    => ['random_forest', 'xgboost', 'neural_network'],
         ]);
 
-        return PredictionResult::fromApiResponse($response);
+        return $response['job_id'];
     }
 
-    public function runAutoMlPredict(string $experimentId, array $dataset): array
+    public function waitForTraining(string $jobId): string
     {
-        $response = $this->client->post("experiments/{$experimentId}/automl/predict", [
-            'dataset' => $dataset,
+        $maxAttempts = 30;
+        $attempt = 0;
+
+        while ($attempt < $maxAttempts) {
+            $response = $this->client->get("v1/automl/jobs/{$jobId}");
+
+            if ($response['status'] === 'completed') {
+                return $response['model_id'];
+            }
+
+            if ($response['status'] === 'failed') {
+                throw new \App\Services\SynapCores\Exceptions\SynapCoresException(
+                    'Training job failed: ' . ($response['error'] ?? 'unknown error')
+                );
+            }
+
+            sleep(10);
+            $attempt++;
+        }
+
+        throw new \App\Services\SynapCores\Exceptions\SynapCoresException(
+            'Training job timed out after ' . ($maxAttempts * 10) . ' seconds'
+        );
+    }
+
+    public function predict(string $modelId, array $features): PredictionResult
+    {
+        $response = $this->client->post("v1/automl/models/{$modelId}/predict", [
+            'rows' => [$features],
+        ]);
+
+        return PredictionResult::fromApiResponse($response['predictions'][0]);
+    }
+
+    public function runAutoMlPredict(string $modelId, array $dataset): array
+    {
+        $response = $this->client->post("v1/automl/models/{$modelId}/predict", [
+            'rows' => $dataset,
         ]);
 
         return array_map(
