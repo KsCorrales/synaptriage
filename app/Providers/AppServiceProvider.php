@@ -9,6 +9,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use App\Services\SynapCores\SynapCoresClient;
 use App\Services\SynapCores\SynapCoresService;
+use App\Services\SynapCores\Contracts\SynapCoresClientInterface;
+use App\Services\SynapCores\FakeSynapCoresClient;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,16 +19,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(SynapCoresClient::class, fn () => new SynapCoresClient(
+        $this->app->singleton(SynapCoresClientInterface::class, fn () => new SynapCoresClient(
             baseUrl: (string) config('services.synapcores.base_url'),
             apiKey:  (string) config('services.synapcores.api_key'),
             timeout: (int) config('services.synapcores.timeout', 30),
             jwtTtl:  (int) config('services.synapcores.jwt_ttl', 3600),
         ));
-    
+        
         $this->app->singleton(SynapCoresService::class, fn ($app) => new SynapCoresService(
-            $app->make(SynapCoresClient::class)
+            $app->make(SynapCoresClientInterface::class)
         ));
+
+        if (app()->environment('testing')) {
+            $this->app->singleton(SynapCoresClientInterface::class, fn () => new FakeSynapCoresClient());
+        }
     }
 
     /**
