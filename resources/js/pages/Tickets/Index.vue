@@ -4,7 +4,7 @@
 
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-                <h1 class="text-2xl font-semibold text-gray-900">Support Tickets</h1>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Support Tickets</h1>
                 <button
                     @click="showForm = !showForm"
                     class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700"
@@ -22,7 +22,7 @@
                         <input
                             v-model="form.subject"
                             type="text"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
                         />
                     </div>
                     <div>
@@ -30,13 +30,13 @@
                         <textarea
                             v-model="form.body"
                             rows="3"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
                         />
                     </div>
                     <div class="grid grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select v-model="form.category" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                            <select v-model="form.category" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900">
                                 <option value="">Select...</option>
                                 <option value="billing">Billing</option>
                                 <option value="technical">Technical</option>
@@ -47,7 +47,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Customer Tier</label>
-                            <select v-model="form.customer_tier" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                            <select v-model="form.customer_tier" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900">
                                 <option value="">Select...</option>
                                 <option value="free">Free</option>
                                 <option value="starter">Starter</option>
@@ -62,7 +62,7 @@
                                 type="number"
                                 min="1"
                                 max="72"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900"
                             />
                         </div>
                     </div>
@@ -146,7 +146,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 
@@ -165,7 +165,7 @@ const form = useForm({
 })
 
 const submit = () => {
-    form.post(route('tickets.store'), {
+    form.post('/tickets', {
         onSuccess: () => {
             showForm.value = false
             form.reset()
