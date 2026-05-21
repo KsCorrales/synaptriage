@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use App\Services\SynapCores\SynapCoresClient;
+use App\Services\SynapCores\SynapCoresService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,10 +18,10 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(SynapCoresClient::class, fn () => new SynapCoresClient(
-            baseUrl: config('services.synapcores.base_url'),
-            apiKey:  config('services.synapcores.api_key'),
-            timeout: config('services.synapcores.timeout'),
-            jwtTtl:  config('services.synapcores.jwt_ttl'),
+            baseUrl: (string) config('services.synapcores.base_url'),
+            apiKey:  (string) config('services.synapcores.api_key'),
+            timeout: (int) config('services.synapcores.timeout', 30),
+            jwtTtl:  (int) config('services.synapcores.jwt_ttl', 3600),
         ));
     
         $this->app->singleton(SynapCoresService::class, fn ($app) => new SynapCoresService(
