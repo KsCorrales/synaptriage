@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('category');
             $table->string('customer_tier');
             $table->integer('response_time_expectation'); // hours
-            $table->string('priority');                   // ground truth for training
+            $table->string('priority')->nullable();                   // ground truth for training
             $table->string('predicted_priority')->nullable();
             $table->float('confidence_score')->nullable();
             $table->string('triage_status')->default('pending'); // pending | complete | failed
