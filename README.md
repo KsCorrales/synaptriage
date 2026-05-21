@@ -222,6 +222,7 @@ This section is intentional. A senior engineer ships pragmatically and documents
 - **Single queue, no priority lanes** — All jobs go to the `default` queue. A production system would have separate `critical` and `default` queues with different worker concurrency.
 - **No test coverage on the SDK** — The `SynapCoresClient` would benefit from a full suite of unit tests mocking HTTP responses, especially for the JWT re-auth path.
 - **No frontend architecture** — Tailwind utility classes are applied inline directly in the component for speed. With more time, this would be extracted into a proper design system, reusable component library, and consistent styling conventions. The frontend was intentionally kept minimal as it is not the focus of this assessment.
+- **SynapCores CE could not be validated end-to-end locally** — The original intent was to install SynapCores Community Edition locally to run the full prediction pipeline against a real instance. The CE binary was successfully installed on Ubuntu via WSL2, however it requires FFmpeg 4.x and Ubuntu 24.04 ships FFmpeg 7.x — an ABI-incompatible conflict that cannot be resolved via symlinks. As a result, a FakeSynapCoresClient was introduced to simulate API responses and validate the full request lifecycle — auth, experiment creation, training, and prediction — without a live instance. Full end-to-end validation would require either a Linux environment with FFmpeg 4.x or a hosted SynapCores instance.
 
 ### What I would do with more time
 
