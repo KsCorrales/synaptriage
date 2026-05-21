@@ -19,6 +19,7 @@ return [
         'api_key'  => env('SYNAPCORES_API_KEY'),
         'timeout'  => env('SYNAPCORES_TIMEOUT', 30),
         'jwt_ttl'  => env('SYNAPCORES_JWT_TTL', 3600),
+        'experiment_id' => env('SYNAPCORES_EXPERIMENT_ID'),
     ],
 
     'postmark' => [
