@@ -220,6 +220,7 @@ This section is intentional. A senior engineer ships pragmatically and documents
 - **No feature importance or model explainability** — We show confidence scores but not which features drove the prediction. A production system would expose this from SynapCores' API response.
 - **Single queue, no priority lanes** — All jobs go to the `default` queue. A production system would have separate `critical` and `default` queues with different worker concurrency.
 - **No test coverage on the SDK** — The `SynapCoresClient` would benefit from a full suite of unit tests mocking HTTP responses, especially for the JWT re-auth path.
+- **No frontend architecture** — Tailwind utility classes are applied inline directly in the component for speed. With more time, this would be extracted into a proper design system, reusable component library, and consistent styling conventions. The frontend was intentionally kept minimal as it is not the focus of this assessment.
 
 ### What I would do with more time
 
