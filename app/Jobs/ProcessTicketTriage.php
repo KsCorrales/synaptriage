@@ -8,7 +8,7 @@ use App\Services\SynapCores\SynapCoresService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
-class ProcessTicketTriage extends Job implements ShouldQueue
+class ProcessTicketTriage implements ShouldQueue
 {
     use Queueable;
 
