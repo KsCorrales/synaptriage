@@ -1,6 +1,6 @@
 # SynapTriage
 
-> Laravel 11 application for support ticket auto-triage, integrating with SynapCores AIDB via a custom SDK.
+> Laravel 13 application for support ticket auto-triage, integrating with SynapCores AIDB via a custom SDK.
 
 ---
 
@@ -18,7 +18,7 @@ SynapTriage automatically classifies and prioritizes incoming support tickets us
 
 | Layer | Technology |
 |---|---|
-| Backend | Laravel 11, PHP 8.2+ |
+| Backend | Laravel 13, PHP 8.2+ |
 | Frontend | Vue 3 + Inertia.js |
 | Database | SQLite (local) |
 | Queue | Laravel Queue (database driver) |
@@ -167,7 +167,7 @@ php artisan queue:work
 php artisan serve
 ```
 
-Visit `http://localhost:8000/tickets`.
+Visit `http://127.0.0.1:8000/tickets`.
 
 ---
 
