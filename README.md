@@ -286,9 +286,11 @@ Visit `http://localhost:8000/tickets`. The ticket table displays all seeded reco
 
 ### What requires a SynapCores instance
 
-- `php artisan synap:seed-experiment` — requires a running SynapCores instance to create and train the experiment
-- `php artisan synap:run-automl` — requires a valid `SYNAPCORES_MODEL_ID` in `.env`
-- Predictions appearing in the UI — require a trained model
+Running `php artisan synap:seed-experiment` or `php artisan synap:run-automl` without
+a live instance will fail with a connection error on `/v1/auth/login` — this is expected
+behavior. The SDK is working correctly; it simply has no server to connect to.
+
+- Predictions appearing in the UI — require a trained model and a valid `SYNAPCORES_MODEL_ID` in `.env`
 
 ---
 
