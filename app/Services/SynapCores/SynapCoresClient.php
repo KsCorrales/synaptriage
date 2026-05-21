@@ -60,8 +60,9 @@ class SynapCoresClient
     {
         try {
             $response = Http::timeout($this->timeout)
-                ->post("{$this->baseUrl}/auth/token", [
-                    'api_key' => $this->apiKey,
+                ->post("{$this->baseUrl}/v1/auth/login", [
+                    'username' => config('services.synapcores.username'),
+                    'password' => config('services.synapcores.password'),
                 ]);
 
             if (! $response->successful()) {
