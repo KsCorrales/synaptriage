@@ -2,12 +2,13 @@
 
 namespace App\Services\SynapCores;
 
+use App\Services\SynapCores\Contracts\SynapCoresClientInterface;
 use App\Services\SynapCores\Exceptions\SynapCoresException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response;
 
-class SynapCoresClient
+class SynapCoresClient implements SynapCoresClientInterface
 {
     private const JWT_CACHE_KEY = 'synapcores_jwt_token';
 

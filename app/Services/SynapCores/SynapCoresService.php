@@ -2,13 +2,14 @@
 
 namespace App\Services\SynapCores;
 
+use App\Services\SynapCores\Contracts\SynapCoresClientInterface;
 use App\Services\SynapCores\DTOs\ExperimentConfig;
 use App\Services\SynapCores\DTOs\PredictionResult;
 
 class SynapCoresService
 {
     public function __construct(
-        private readonly SynapCoresClient $client,
+        private readonly SynapCoresClientInterface $client,
     ) {}
 
     public function createExperiment(ExperimentConfig $config): string
