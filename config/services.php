@@ -15,11 +15,12 @@ return [
     */
 
     'synapcores' => [
-        'base_url' => env('SYNAPCORES_BASE_URL'),
-        'api_key'  => env('SYNAPCORES_API_KEY'),
-        'timeout'  => env('SYNAPCORES_TIMEOUT', 30),
-        'jwt_ttl'  => env('SYNAPCORES_JWT_TTL', 3600),
-        'experiment_id' => env('SYNAPCORES_EXPERIMENT_ID'),
+        'base_url'    => env('SYNAPCORES_BASE_URL', 'http://localhost:8080'),
+        'username'    => env('SYNAPCORES_USERNAME', 'admin'),
+        'password'    => env('SYNAPCORES_PASSWORD'),
+        'timeout'     => env('SYNAPCORES_TIMEOUT', 30),
+        'jwt_ttl'     => env('SYNAPCORES_JWT_TTL', 3600),
+        'model_id'    => env('SYNAPCORES_MODEL_ID'),
     ],
 
     'postmark' => [
